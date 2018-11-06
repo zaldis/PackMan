@@ -35,9 +35,11 @@ class LevelController:
         level_path = os.path.join(LevelController.LEVEL_PATH, f'{self.level_number}.lvl')
         self.key_controller.start()
 
-        while self.level_number <= 2 and self.arena.player_lives >= 0:
+        while self.level_number <= 2 and self.arena.player_lives > 0:
             self.arena.load_from_file(level_path)
-            while self.arena.player_lives and self.key_controller.is_alive() and self.arena.dots >= 0:
+            while self.arena.player_lives > 0 and \
+                    self.key_controller.is_alive() and \
+                    self.arena.dots > 0:
                 ConsolePresentation.show_arena(self.screen, self.arena.arena)
                 ConsolePresentation.show_status(self.statistic_win,
                                                 self.arena.spaces,
@@ -45,12 +47,17 @@ class LevelController:
                                                 self.arena.player_lives)
                 time.sleep(0.1)
 
+            ConsolePresentation.show_status(self.statistic_win,
+                                            self.arena.spaces,
+                                            self.arena.dots,
+                                            self.arena.player_lives)
+
+            self.arena.stop()
             self.level_number += 1
             level_path = os.path.join(LevelController.LEVEL_PATH, f'{self.level_number}.lvl')
 
         self.arena.stop()
-        self.key_controller.close()
-        self.screen.getch()
+        self.key_controller.stop()
 
     def close(self):
         curses.nocbreak()
@@ -66,7 +73,7 @@ class KeyController(threading.Thread):
         self.arena = arena
         self.is_running = True
 
-    def close(self):
+    def stop(self):
         self.is_running = False
 
     def run(self):
@@ -89,7 +96,7 @@ class KeyController(threading.Thread):
                 ConsolePresentation.show_arena(self.screen, self.arena.arena)
 
             if c == ord('`'):
-                self.is_running = False
+                self.stop()
                 self.arena.stop()
 
             ConsolePresentation.show_status(self.statistic_win,

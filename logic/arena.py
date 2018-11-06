@@ -8,12 +8,14 @@ from .unit import Dot
 from .unit import Space
 from .unit import PackMan
 from .unit import Ghost
+from .unit import Wall
 from .unit import DIRECTIONS
 
 
 GAME_OBJECTS = {
     Space: ' ',
     Dot: '.',
+    Wall: 'W',
     PackMan: 'P',
     Ghost: 'G'
 }
@@ -30,6 +32,7 @@ class Arena:
         self.width = width
         self.height = height
         self._arena = [[GAME_OBJECTS[Dot]] * width for h in range(height)]
+        self._back_arena = [[GAME_OBJECTS[Dot]] * width for h in range(height)]
         self._player.position.x = 0
         self._player.position.y = 0
         self._arena[0][0] = GAME_OBJECTS[PackMan]
@@ -44,6 +47,7 @@ class Arena:
             self.width = width
             self.height = height
             self._arena = [[GAME_OBJECTS[Dot]] * width for h in range(height)]
+            self._back_arena = [[GAME_OBJECTS[Space]] * width for h in range(height)]
 
             for y, line in enumerate(fhandle):
                 for x, ch in enumerate(line.strip()):
@@ -129,17 +133,24 @@ class Arena:
                     self._player.position = _Point(0, 0)
                     self._arena[self._player.position.y][self._player.position.x] = GAME_OBJECTS[PackMan]
 
-                    if self.player_lives == 0:
-                        self.stop()
-
             if isinstance(unit, (Ghost, )):
                 if self._arena[unit.position.y][unit.position.x] == GAME_OBJECTS[Ghost] or \
                         self._arena[unit.position.y][unit.position.x] == GAME_OBJECTS[Dot]:
                     unit.position = start_position
                     return False
 
-            self._arena[start_position.y][start_position.x] = GAME_OBJECTS[Space]
-            self._arena[unit.position.y][unit.position.x] = GAME_OBJECTS[type(unit)]
+            if isinstance(unit, (PackMan, )):
+                if self._arena[unit.position.y][unit.position.x] == GAME_OBJECTS[Wall]:
+                    unit.position = start_position
+                    return False
+
+            if not isinstance(unit, (PackMan, )):
+                self._arena[start_position.y][start_position.x] = self._back_arena[start_position.y][start_position.x]
+                self._back_arena[unit.position.y][unit.position.x] = self._arena[unit.position.y][unit.position.x]
+                self._arena[unit.position.y][unit.position.x] = GAME_OBJECTS[type(unit)]
+            else:
+                self._arena[start_position.y][start_position.x] = GAME_OBJECTS[Space]
+                self._arena[unit.position.y][unit.position.x] = GAME_OBJECTS[PackMan]
             return True
 
 
