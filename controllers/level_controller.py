@@ -37,7 +37,7 @@ class LevelController:
         level_files = [x for x in filter(lambda x: x[-4:] == '.lvl', os.listdir(LevelController.LEVEL_PATH))]
         self.key_controller.start()
 
-        while self.level_number <= len(level_files) and self.arena.player_lives > 0:
+        while self.level_number <= len(level_files) and self.arena.player_lives > 0 and self.key_controller.is_alive():
             self.arena.load_from_file(level_path)
             while self.arena.player_lives > 0 and \
                     self.key_controller.is_alive() and \

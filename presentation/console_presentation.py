@@ -7,7 +7,8 @@ GAME_OBJECTS_PRESENTATION = {
     '.': '*',
     'P': '@',
     'G': 'G',
-    'W': '#'
+    'W': '#',
+    'B': '?'
 }
 
 

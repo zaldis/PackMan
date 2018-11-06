@@ -43,7 +43,7 @@ class PackMan(_Unit):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.lives = 3
-        self.pause = 0.1
+        self.pause = 0
         self.state = _NormalPackManState
 
     def to_normal(self):
@@ -71,18 +71,32 @@ class _HungryPackManState:
 class Ghost(_Unit):
     def __init__(self, *args, code=0, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pause = 0.5
+        self.pause = 1
         self.code = code
 
 
 class Bonus(_Unit):
+    def __init__(self, packman, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.packman = packman
+
     def apply(self):
+        raise NotImplementedError()
+
+    def destroy(self):
         raise NotImplementedError()
 
 
 class SpeedBonus(Bonus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.initial_pause = self.packman.pause
+
     def apply(self):
-        pass
+        self.packman.pause = 1
+
+    def destroy(self):
+        self.packman.pause = self.initial_pause
 
 
 class Dot(GameObject):
