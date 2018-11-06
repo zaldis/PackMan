@@ -13,8 +13,9 @@ class LevelController:
         self.level_number = 1
         self.arena = Arena()
         self.screen = curses.initscr()
-        self.statistic_win = curses.newwin(4, 30, 10, 60)
-        self.key_controller = KeyController(self.screen, self.statistic_win, self.arena)
+        self.arena_win = curses.newwin(20, 40, 0, 0)
+        self.statistic_win = curses.newwin(4, 30, 0, 45)
+        self.key_controller = KeyController(self.screen, self.arena_win, self.statistic_win, self.arena)
         self.base_load()
 
     def base_load(self):
@@ -31,16 +32,17 @@ class LevelController:
                                         self.arena.player_lives)
         self.key_controller.start()
 
-    def next_level(self):
+    def run_game(self):
         level_path = os.path.join(LevelController.LEVEL_PATH, f'{self.level_number}.lvl')
+        level_files = [x for x in filter(lambda x: x[-4:] == '.lvl', os.listdir(LevelController.LEVEL_PATH))]
         self.key_controller.start()
 
-        while self.level_number <= 2 and self.arena.player_lives > 0:
+        while self.level_number <= len(level_files) and self.arena.player_lives > 0:
             self.arena.load_from_file(level_path)
             while self.arena.player_lives > 0 and \
                     self.key_controller.is_alive() and \
                     self.arena.dots > 0:
-                ConsolePresentation.show_arena(self.screen, self.arena.arena)
+                ConsolePresentation.show_arena(self.arena_win, self.arena.arena)
                 ConsolePresentation.show_status(self.statistic_win,
                                                 self.arena.spaces,
                                                 self.arena.dots,
@@ -66,9 +68,10 @@ class LevelController:
 
 
 class KeyController(threading.Thread):
-    def __init__(self, screen, statistic_win, arena):
+    def __init__(self, screen, arena_win, statistic_win, arena):
         super().__init__()
         self.screen = screen
+        self.arena_win = arena_win
         self.statistic_win = statistic_win
         self.arena = arena
         self.is_running = True
@@ -78,22 +81,22 @@ class KeyController(threading.Thread):
 
     def run(self):
         while self.is_running:
-            c = self.screen.getch()
+            c = self.arena_win.getch()
             if c == ord('a'):
                 self.arena.move_player("LEFT")
-                ConsolePresentation.show_arena(self.screen, self.arena.arena)
+                ConsolePresentation.show_arena(self.arena_win, self.arena.arena)
 
             if c == ord('d'):
                 self.arena.move_player("RIGHT")
-                ConsolePresentation.show_arena(self.screen, self.arena.arena)
+                ConsolePresentation.show_arena(self.arena_win, self.arena.arena)
 
             if c == ord('w'):
                 self.arena.move_player("UP")
-                ConsolePresentation.show_arena(self.screen, self.arena.arena)
+                ConsolePresentation.show_arena(self.arena_win, self.arena.arena)
 
             if c == ord('s'):
                 self.arena.move_player("DOWN")
-                ConsolePresentation.show_arena(self.screen, self.arena.arena)
+                ConsolePresentation.show_arena(self.arena_win, self.arena.arena)
 
             if c == ord('`'):
                 self.stop()
@@ -103,4 +106,7 @@ class KeyController(threading.Thread):
                                             self.arena.spaces,
                                             self.arena.dots,
                                             self.arena.player_lives)
+
+            time.sleep(self.arena.player_pause)
+            curses.flushinp()
 

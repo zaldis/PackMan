@@ -31,13 +31,13 @@ class Arena:
 
         self.width = width
         self.height = height
-        self._arena = [[GAME_OBJECTS[Dot]] * width for h in range(height)]
-        self._back_arena = [[GAME_OBJECTS[Dot]] * width for h in range(height)]
+        self._objects_map = [[None] * width for h in range(height)]
+        self._back_arena = [[Dot] * width for h in range(height)]
         self._player.position.x = 0
         self._player.position.y = 0
-        self._arena[0][0] = GAME_OBJECTS[PackMan]
+        self._objects_map[0][0] = PackMan
         self._ghosts.append(Ghost(position=_Point(width - 1, height - 1)))
-        self._arena[height - 1][width - 1] = GAME_OBJECTS[Ghost]
+        self._objects_map[height - 1][width - 1] = Ghost
 
     def load_from_file(self, path):
         self.reset()
@@ -46,19 +46,24 @@ class Arena:
             width, height = map(int, fhandle.readline().split())
             self.width = width
             self.height = height
-            self._arena = [[GAME_OBJECTS[Dot]] * width for h in range(height)]
-            self._back_arena = [[GAME_OBJECTS[Space]] * width for h in range(height)]
+            self._objects_map = [[None] * width for h in range(height)]
+            self._back_arena = [[Dot] * width for h in range(height)]
 
             for y, line in enumerate(fhandle):
                 for x, ch in enumerate(line.strip()):
                     if ch == GAME_OBJECTS[PackMan]:
                         self._player.position = _Point(x, y)
+                        self._objects_map[y][x] = PackMan
                     if ch == GAME_OBJECTS[Dot]:
                         self._dots.append(Dot(_Point(x, y)))
+                        self._objects_map[y][x] = Dot
                     if ch == GAME_OBJECTS[Ghost]:
                         self._ghosts.append(Ghost(_Point(x, y), code=len(self._ghosts)))
-
-                    self._arena[y][x] = ch
+                        self._objects_map[y][x] = Ghost
+                    if ch == GAME_OBJECTS[Wall]:
+                        self._objects_map[y][x] = Wall
+                    if ch == GAME_OBJECTS[Space]:
+                        self._objects_map[y][x] = Space
 
         for ghost in self._ghosts:
             runner = RunnerGhost(ghost, self)
@@ -78,31 +83,40 @@ class Arena:
 
     @property
     def arena(self):
-        return self._arena
+        res = [[None] * self.width for _ in range(self.height)]
+        for y, line in enumerate(self._objects_map):
+            for x, el in enumerate(line):
+                res[y][x] = GAME_OBJECTS[el]
+
+        return res
 
     @property
     def dots(self):
         cnt_dots = 0
-        for line in self._arena:
-            for ch in line:
-                if ch == GAME_OBJECTS[Dot]:
+        for line in self._objects_map:
+            for el in line:
+                if issubclass(el, Dot):
                     cnt_dots += 1
 
         return cnt_dots
 
     @property
     def spaces(self):
-        cnt_dots = 0
-        for line in self._arena:
-            for ch in line:
-                if ch == GAME_OBJECTS[Space]:
-                    cnt_dots += 1
+        cnt_spaces = 0
+        for line in self._objects_map:
+            for el in line:
+                if issubclass(el, Space):
+                    cnt_spaces += 1
 
-        return cnt_dots
+        return cnt_spaces
 
     @property
     def player_lives(self):
         return self._player.lives
+
+    @property
+    def player_pause(self):
+        return self._player.pause
 
     def move_player(self, direction):
         self.move_unit(self._player, direction)
@@ -127,30 +141,35 @@ class Arena:
             if unit.position.y >= self.height:
                 unit.position.y = 0
 
-            if self._arena[self._player.position.y][self._player.position.x] == GAME_OBJECTS[Ghost]:
+            # if player cross with ghost
+            if issubclass(self._objects_map[self._player.position.y][self._player.position.x], Ghost):
                 if not self._player.is_hungry():
                     self._player.lives -= 1
                     self._player.position = _Point(0, 0)
-                    self._arena[self._player.position.y][self._player.position.x] = GAME_OBJECTS[PackMan]
+                    self._objects_map[self._player.position.y][self._player.position.x] = PackMan
 
             if isinstance(unit, (Ghost, )):
-                if self._arena[unit.position.y][unit.position.x] == GAME_OBJECTS[Ghost] or \
-                        self._arena[unit.position.y][unit.position.x] == GAME_OBJECTS[Dot]:
+                if self._objects_map[unit.position.y][unit.position.x] == Ghost or \
+                        self._objects_map[unit.position.y][unit.position.x] == Dot:
                     unit.position = start_position
                     return False
 
             if isinstance(unit, (PackMan, )):
-                if self._arena[unit.position.y][unit.position.x] == GAME_OBJECTS[Wall]:
+                if self._objects_map[unit.position.y][unit.position.x] == Wall:
                     unit.position = start_position
                     return False
 
             if not isinstance(unit, (PackMan, )):
-                self._arena[start_position.y][start_position.x] = self._back_arena[start_position.y][start_position.x]
-                self._back_arena[unit.position.y][unit.position.x] = self._arena[unit.position.y][unit.position.x]
-                self._arena[unit.position.y][unit.position.x] = GAME_OBJECTS[type(unit)]
+                self._objects_map[start_position.y][start_position.x] = self._back_arena[start_position.y][start_position.x]
+                if self._objects_map[unit.position.y][unit.position.x] != PackMan and \
+                   self._objects_map[unit.position.y][unit.position.x] != Ghost:
+                        self._back_arena[unit.position.y][unit.position.x] = \
+                            self._objects_map[unit.position.y][unit.position.x]
+                self._objects_map[unit.position.y][unit.position.x] = type(unit)
             else:
-                self._arena[start_position.y][start_position.x] = GAME_OBJECTS[Space]
-                self._arena[unit.position.y][unit.position.x] = GAME_OBJECTS[PackMan]
+                self._objects_map[start_position.y][start_position.x] = Space
+                self._objects_map[unit.position.y][unit.position.x] = PackMan
+
             return True
 
 
@@ -169,4 +188,5 @@ class RunnerGhost(threading.Thread):
             cnt = 40
             while not self.arena.move_ghost(self.ghost.code) and cnt > 0:
                 cnt -= 1
-            time.sleep(1)
+
+            time.sleep(self.ghost.pause)

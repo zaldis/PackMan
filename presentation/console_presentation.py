@@ -1,3 +1,7 @@
+import threading
+import time
+
+
 GAME_OBJECTS_PRESENTATION = {
     ' ': '·',
     '.': '*',
@@ -10,15 +14,17 @@ GAME_OBJECTS_PRESENTATION = {
 class ConsolePresentation:
     @staticmethod
     def show_arena(screen, arena):
-        screen.clear()
-        height = len(arena)
-        width = len(arena[0])
+        with threading.Lock():
+            screen.clear()
+            height = len(arena)
+            width = len(arena[0])
 
-        for h in range(height):
-            for w in range(width):
-                screen.addstr(h, w, f"{GAME_OBJECTS_PRESENTATION[arena[h][w]]:2}")
+            for h in range(height):
+                for w in range(width):
+                    screen.addstr(h, w, f"{GAME_OBJECTS_PRESENTATION[arena[h][w]]}")
 
-        screen.refresh()
+            screen.refresh()
+            time.sleep(0.1)
 
     @staticmethod
     def show_status(screen, taken_points: int, all_points: int, lives: int):
