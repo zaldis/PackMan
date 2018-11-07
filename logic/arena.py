@@ -9,6 +9,7 @@ from .unit import Space
 from .unit import PackMan
 from .unit import Ghost
 from .unit import Wall
+from .unit import Door
 from .unit import Bonus
 from .unit import SpeedBonus
 from .unit import DIRECTIONS
@@ -18,6 +19,7 @@ GAME_OBJECTS = {
     Space: ' ',
     Dot: '.',
     Wall: 'W',
+    Door: 'D',
     PackMan: 'P',
     Ghost: 'G',
     Bonus: 'B'
@@ -36,6 +38,8 @@ class Arena:
         self.bonus_runners = []
         self._width = width
         self._height = height
+        self.running_game = True
+        self.opened_door = False
         self._objects_map = [[None] * width for h in range(height)]
         self._back_arena = [[Dot] * width for h in range(height)]
         self._player.position.x = 0
@@ -46,6 +50,8 @@ class Arena:
 
     def load_from_file(self, path):
         self.reset()
+        self.running_game = True
+        self.opened_door = False
 
         with open(path, 'r') as fhandle:
             width, height = map(int, fhandle.readline().split())
@@ -113,7 +119,7 @@ class Arena:
         return res
 
     @property
-    def dots(self):
+    def count_dots(self):
         cnt_dots = 0
         for line in self._objects_map:
             for el in line:
@@ -152,6 +158,13 @@ class Arena:
 
     def move_player(self, direction):
         self.move_unit(self._player, direction)
+        if self.count_dots == 0 and not self.opened_door:
+            self.create_door()
+            self.opened_door = True
+
+    def create_door(self):
+        space_position = self.space_position
+        self._objects_map[space_position.y][space_position.x] = Door
 
     def move_ghost(self, ghost_code):
         with threading.Lock():
@@ -202,6 +215,8 @@ class Arena:
                     )
                     runner = BonusApplier(bonus)
                     runner.start()
+                if issubclass(self._objects_map[unit.position.y][unit.position.x], Door):
+                    self.running_game = False
 
             if not isinstance(unit, (PackMan, )):
                 self._objects_map[start_position.y][start_position.x] = self._back_arena[start_position.y][start_position.x]
@@ -249,15 +264,16 @@ class BonusGenerator(threading.Thread):
 
     def run(self):
         while self._is_running:
-            self.sleeper.wait(timeout=30)
-
-            space_position = self.arena.space_position
-            if space_position:
-                speed_bonus = SpeedBonus(position=space_position, packman=self.arena.player)
-                bonus_runner = BonusRunner(self.arena, bonus=speed_bonus)
-                self.arena._objects_map[space_position.y][space_position.x] = SpeedBonus
-                self.arena.bonus_runners.append(bonus_runner)
-                bonus_runner.start()
+            pass
+            # self.sleeper.wait(timeout=30)
+            #
+            # space_position = self.arena.space_position
+            # if space_position:
+            #     speed_bonus = SpeedBonus(position=space_position, packman=self.arena.player)
+            #     bonus_runner = BonusRunner(self.arena, bonus=speed_bonus)
+            #     self.arena._objects_map[space_position.y][space_position.x] = SpeedBonus
+            #     self.arena.bonus_runners.append(bonus_runner)
+            #     bonus_runner.start()
 
 
 class BonusRunner(threading.Thread):

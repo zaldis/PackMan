@@ -28,7 +28,7 @@ class LevelController:
         ConsolePresentation.show_arena(self.screen, self.arena.arena)
         ConsolePresentation.show_status(self.statistic_win,
                                         self.arena.spaces,
-                                        self.arena.dots,
+                                        self.arena.count_dots,
                                         self.arena.player_lives)
         self.key_controller.start()
 
@@ -41,25 +41,26 @@ class LevelController:
             self.arena.load_from_file(level_path)
             while self.arena.player_lives > 0 and \
                     self.key_controller.is_alive() and \
-                    self.arena.dots > 0:
+                    self.arena.running_game:
                 ConsolePresentation.show_arena(self.arena_win, self.arena.arena)
-                ConsolePresentation.show_status(self.statistic_win,
-                                                self.arena.spaces,
-                                                self.arena.dots,
-                                                self.arena.player_lives)
+                self.print_status()
                 time.sleep(0.1)
 
-            ConsolePresentation.show_status(self.statistic_win,
-                                            self.arena.spaces,
-                                            self.arena.dots,
-                                            self.arena.player_lives)
-
+            self.print_status()
             self.arena.stop()
             self.level_number += 1
             level_path = os.path.join(LevelController.LEVEL_PATH, f'{self.level_number}.lvl')
 
         self.arena.stop()
         self.key_controller.stop()
+
+    def print_status(self):
+        status = {
+            'level_number': self.level_number,
+            'remain_dots': self.arena.count_dots,
+            'lives': self.arena.player_lives
+        }
+        ConsolePresentation.show_status(self.statistic_win, status)
 
     def close(self):
         curses.nocbreak()
@@ -102,10 +103,10 @@ class KeyController(threading.Thread):
                 self.stop()
                 self.arena.stop()
 
-            ConsolePresentation.show_status(self.statistic_win,
-                                            self.arena.spaces,
-                                            self.arena.dots,
-                                            self.arena.player_lives)
+            # ConsolePresentation.show_status(self.statistic_win,
+            #                                 self.arena.spaces,
+            #                                 self.arena.count_dots,
+            #                                 self.arena.player_lives)
 
             time.sleep(self.arena.player_pause)
             curses.flushinp()

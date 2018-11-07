@@ -8,7 +8,8 @@ GAME_OBJECTS_PRESENTATION = {
     'P': '@',
     'G': 'G',
     'W': '#',
-    'B': '?'
+    'B': '?',
+    'D': 'x'
 }
 
 
@@ -28,9 +29,13 @@ class ConsolePresentation:
             time.sleep(0.1)
 
     @staticmethod
-    def show_status(screen, taken_points: int, all_points: int, lives: int):
+    def show_status(screen, status: dict):
         screen.clear()
-        screen.addstr(0, 0, f"Points: {taken_points}/{all_points}")
-        screen.addstr(1, 0, f"Lives: {'@' * lives}")
+        level_number = status['level_number']
+        screen.addstr(0, 0, f"Level: {level_number}")
+        remain_dots = status['remain_dots']
+        screen.addstr(1, 0, f"Remain dots: {remain_dots}")
+        lives = status['lives']
+        screen.addstr(2, 0, f"Lives: {'@' * lives}")
         screen.refresh()
 
