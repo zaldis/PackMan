@@ -12,6 +12,7 @@ from .unit import Wall
 from .unit import Door
 from .unit import Bonus
 from .unit import SpeedBonus
+from .unit import HungryBonus
 from .unit import DIRECTIONS
 
 
@@ -35,6 +36,7 @@ class Arena:
         self._bonus_generator = BonusGenerator(self)
         self._player = PackMan(position=_Point(x=0, y=0))
 
+        self._all_bonuses = []
         self.bonus_runners = []
         self._width = width
         self._height = height
@@ -85,6 +87,7 @@ class Arena:
         self._bonus_generator.start()
 
     def reset(self):
+        self._all_bonuses = [HungryBonus, SpeedBonus]
         self._dots.clear()
         self._spaces.clear()
         self._ghosts.clear()
@@ -156,6 +159,14 @@ class Arena:
 
             return None
 
+    @property
+    def score(self):
+        return self._player.score
+
+    @property
+    def bonuses(self):
+        return self._player.bonuses
+
     def move_player(self, direction):
         self.move_unit(self._player, direction)
         if self.count_dots == 0 and not self.opened_door:
@@ -195,31 +206,40 @@ class Arena:
             if issubclass(self._objects_map[self._player.position.y][self._player.position.x], Ghost):
                 if not self._player.is_hungry():
                     self._player.lives -= 1
-                    self._player.position = _Point(0, 0)
+                    self._player.position = self.space_position
                     self._objects_map[self._player.position.y][self._player.position.x] = PackMan
+                else:
+                    self.stop_ghost_runner(position=_Point(self._player.position.x, self._player.position.y))
 
+            # ghosts and bonuses don't cross
             if isinstance(unit, (Ghost, )) or issubclass(type(unit), Bonus):
                 if self._objects_map[unit.position.y][unit.position.x] == Ghost or \
-                        self._objects_map[unit.position.y][unit.position.x] == Dot:
+                        self._objects_map[unit.position.y][unit.position.x] == Dot or \
+                        issubclass(self._objects_map[unit.position.y][unit.position.x], Bonus):
                     unit.position = start_position
                     return False
 
             if isinstance(unit, (PackMan, )):
-                if self._objects_map[unit.position.y][unit.position.x] == Wall:
+                if self._objects_map[unit.position.y][unit.position.x] == Wall or \
+                        self._back_arena[unit.position.y][unit.position.x] == Wall:
                     unit.position = start_position
                     return False
+                self._player.score += self._objects_map[unit.position.y][unit.position.x].score
                 if issubclass(self._objects_map[unit.position.y][unit.position.x], Bonus):
                     bonus = (self._objects_map[unit.position.y][unit.position.x])(
                         packman=self._player,
                         position=_Point(unit.position.x, unit.position.y)
                     )
-                    runner = BonusApplier(bonus)
-                    runner.start()
+                    self.stop_bonus_runner(_Point(bonus.position.x, bonus.position.y))
+                    if not self._player.have_bonus(type(bonus)):
+                        applier = BonusApplier(bonus)
+                        applier.start()
                 if issubclass(self._objects_map[unit.position.y][unit.position.x], Door):
                     self.running_game = False
 
             if not isinstance(unit, (PackMan, )):
-                self._objects_map[start_position.y][start_position.x] = self._back_arena[start_position.y][start_position.x]
+                self._objects_map[start_position.y][start_position.x] = \
+                    self._back_arena[start_position.y][start_position.x]
                 if self._objects_map[unit.position.y][unit.position.x] != PackMan and \
                    self._objects_map[unit.position.y][unit.position.x] != Ghost:
                         self._back_arena[unit.position.y][unit.position.x] = \
@@ -230,6 +250,16 @@ class Arena:
                 self._objects_map[unit.position.y][unit.position.x] = PackMan
 
             return True
+
+    def stop_ghost_runner(self, position: _Point):
+        for runner in self._ghost_runners:
+            if runner.ghost.position.x == position.x and runner.ghost.position.y == position.y:
+                runner.stop()
+
+    def stop_bonus_runner(self, position: _Point):
+        for runner in self.bonus_runners:
+            if runner.bonus.position.x == position.x and runner.bonus.position.y == position.y:
+                runner.stop()
 
 
 class RunnerGhost(threading.Thread):
@@ -265,15 +295,16 @@ class BonusGenerator(threading.Thread):
     def run(self):
         while self._is_running:
             pass
-            # self.sleeper.wait(timeout=30)
-            #
-            # space_position = self.arena.space_position
-            # if space_position:
-            #     speed_bonus = SpeedBonus(position=space_position, packman=self.arena.player)
-            #     bonus_runner = BonusRunner(self.arena, bonus=speed_bonus)
-            #     self.arena._objects_map[space_position.y][space_position.x] = SpeedBonus
-            #     self.arena.bonus_runners.append(bonus_runner)
-            #     bonus_runner.start()
+            self.sleeper.wait(timeout=40)
+
+            space_position = self.arena.space_position
+            if space_position:
+                bonus_type = random.choice(self.arena._all_bonuses)
+                speed_bonus = bonus_type(position=space_position, packman=self.arena.player)
+                bonus_runner = BonusRunner(self.arena, bonus=speed_bonus)
+                self.arena._objects_map[space_position.y][space_position.x] = SpeedBonus
+                self.arena.bonus_runners.append(bonus_runner)
+                bonus_runner.start()
 
 
 class BonusRunner(threading.Thread):

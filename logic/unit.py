@@ -1,4 +1,5 @@
 import random
+import threading
 
 
 class _Point:
@@ -40,11 +41,31 @@ class _Unit(GameObject):
 
 
 class PackMan(_Unit):
+    score = 0
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.lives = 3
-        self.pause = 0
-        self.state = _NormalPackManState
+        self.lives = 5
+        self.pause = 0.1
+        self.score = 0
+        self.bonuses = set()
+        self.state = _HungryPackManState()
+
+    def have_bonus(self, bonus_type):
+        equal_bonuses = [y for y in filter(lambda x: type(x) == bonus_type, [x for x in self.bonuses])]
+        return len(equal_bonuses) > 0
+
+    def add_bonus(self, bonus):
+        self.bonuses.add(bonus)
+
+    def delete_bonus(self, bonus_type):
+        target_bonuses = []
+        for bonus in self.bonuses:
+            if type(bonus) == bonus_type:
+                target_bonuses.append(bonus)
+
+        for bonus in target_bonuses:
+            self.bonuses.remove(bonus)
 
     def to_normal(self):
         self.state = _NormalPackManState
@@ -69,15 +90,27 @@ class _HungryPackManState:
 
 
 class Ghost(_Unit):
+    score = 5
+
     def __init__(self, *args, code=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.pause = 1
         self.code = code
 
 
-class Bonus(_Unit):
+class _CounterMix(object):
+    count_objects = 0
+
+    def __init__(self):
+        _CounterMix.count_objects += 1
+
+
+class Bonus(_Unit, _CounterMix):
+    score = 2
+
     def __init__(self, packman, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(_Unit, self).__init__(*args, **kwargs)
+        super(_CounterMix, self).__init__()
         self.packman = packman
 
     def apply(self):
@@ -86,6 +119,9 @@ class Bonus(_Unit):
     def destroy(self):
         raise NotImplementedError()
 
+    def __repr__(self):
+        return f"I am bonus ;)"
+
 
 class SpeedBonus(Bonus):
     def __init__(self, *args, **kwargs):
@@ -93,18 +129,43 @@ class SpeedBonus(Bonus):
         self.initial_pause = self.packman.pause
 
     def apply(self):
-        self.packman.pause = 1
+        with threading.Lock():
+            self.packman.add_bonus(self)
+            self.packman.pause = 1
 
     def destroy(self):
-        self.packman.pause = self.initial_pause
+        with threading.Lock():
+            self.packman.pause = self.initial_pause
+            self.packman.delete_bonus(type(self))
+
+    def __repr__(self):
+        return f"slow speed bonus"
+
+
+class HungryBonus(Bonus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def apply(self):
+        with threading.Lock():
+            self.packman.add_bonus(self)
+            self.packman.state = _HungryPackManState()
+
+    def destroy(self):
+        with threading.Lock():
+            self.packman.state = _NormalPackManState()
+            self.packman.delete_bonus(type(self))
+
+    def __repr__(self):
+        return f"hungry bonus"
 
 
 class Dot(GameObject):
-    pass
+    score = 1
 
 
 class Space(GameObject):
-    pass
+    score = 0
 
 
 class Wall(GameObject):
@@ -112,4 +173,4 @@ class Wall(GameObject):
 
 
 class Door(GameObject):
-    pass
+    score = 10

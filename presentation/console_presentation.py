@@ -35,7 +35,16 @@ class ConsolePresentation:
         screen.addstr(0, 0, f"Level: {level_number}")
         remain_dots = status['remain_dots']
         screen.addstr(1, 0, f"Remain dots: {remain_dots}")
+
+        score = status['score']
+        screen.addstr(3, 0, f"Score: {score}")
         lives = status['lives']
-        screen.addstr(2, 0, f"Lives: {'@' * lives}")
+        screen.addstr(4, 0, f"Lives: {'@' * lives}")
+
+        screen.addstr(6, 0, "Bonuses:")
+        bonuses = status['bonuses']
+        for i, bonus in enumerate(bonuses):
+            screen.addstr(7 + i, 0, f"{bonus}")
+
         screen.refresh()
 
