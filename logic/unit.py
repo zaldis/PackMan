@@ -45,11 +45,11 @@ class PackMan(_Unit):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.lives = 5
+        self.lives = 3
         self.pause = 0.1
         self.score = 0
         self.bonuses = set()
-        self.state = _HungryPackManState()
+        self.state = _NormalPackManState()
 
     def have_bonus(self, bonus_type):
         equal_bonuses = [y for y in filter(lambda x: type(x) == bonus_type, [x for x in self.bonuses])]

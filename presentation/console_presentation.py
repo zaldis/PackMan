@@ -1,5 +1,5 @@
 import threading
-import time
+import curses
 
 
 GAME_OBJECTS_PRESENTATION = {
@@ -12,39 +12,82 @@ GAME_OBJECTS_PRESENTATION = {
     'D': 'x'
 }
 
+ARENA_WIN_H = 15
+ARENA_WIN_W = 30
+
+STATISTIC_WIN_H = 15
+STATISTIC_WIN_W = 30
+
 
 class ConsolePresentation:
-    @staticmethod
-    def show_arena(screen, arena):
+    screen = curses.initscr()
+    arena_win = curses.newwin(ARENA_WIN_H + 1, ARENA_WIN_W + 1, 0, 0)
+    statistic_win = curses.newwin(STATISTIC_WIN_H, STATISTIC_WIN_W, 0, 35)
+
+    @classmethod
+    def load(cls):
+        curses.noecho()
+        curses.cbreak()
+        cls.screen.keypad(True)
+
+    @classmethod
+    def close(cls):
+        curses.nocbreak()
+        cls.screen.keypad(False)
+        curses.echo()
+
+    @classmethod
+    def show_arena(cls, arena):
         with threading.Lock():
-            screen.clear()
-            height = len(arena)
-            width = len(arena[0])
+            cls.arena_win.clear()
 
-            for h in range(height):
-                for w in range(width):
-                    screen.addstr(h, w, f"{GAME_OBJECTS_PRESENTATION[arena[h][w]]}")
+            for h in range(len(arena)):
+                for w in range(len(arena[0])):
+                    cls.arena_win.addstr(h, w, f"{GAME_OBJECTS_PRESENTATION[arena[h][w]]}")
 
-            screen.refresh()
-            time.sleep(0.1)
+            cls.arena_win.refresh()
 
-    @staticmethod
-    def show_status(screen, status: dict):
-        screen.clear()
+    @classmethod
+    def show_status(cls, status: dict):
+        cls.statistic_win.clear()
         level_number = status['level_number']
-        screen.addstr(0, 0, f"Level: {level_number}")
+        cls.statistic_win.addstr(0, 0, f"Level: {level_number}")
         remain_dots = status['remain_dots']
-        screen.addstr(1, 0, f"Remain dots: {remain_dots}")
+        cls.statistic_win.addstr(1, 0, f"Remain dots: {remain_dots}")
 
         score = status['score']
-        screen.addstr(3, 0, f"Score: {score}")
+        cls.statistic_win.addstr(3, 0, f"Score: {score}")
         lives = status['lives']
-        screen.addstr(4, 0, f"Lives: {'@' * lives}")
+        cls.statistic_win.addstr(4, 0, f"Lives: {'@' * lives}")
 
-        screen.addstr(6, 0, "Bonuses:")
+        cls.statistic_win.addstr(6, 0, "Bonuses:")
         bonuses = status['bonuses']
         for i, bonus in enumerate(bonuses):
-            screen.addstr(7 + i, 0, f"{bonus}")
+            cls.statistic_win.addstr(7 + i, 0, f"{bonus}")
 
-        screen.refresh()
+        cls.statistic_win.refresh()
 
+    @classmethod
+    def create_key_controller(cls, next_player_step):
+        key_controller = KeyController(cls.arena_win, next_player_step)
+        return key_controller
+
+
+class KeyController(threading.Thread):
+    def __init__(self, arena_win, next_player_step):
+        super().__init__()
+        self.arena_win = arena_win
+        self.next_layer_step = next_player_step
+        self.is_running = True
+
+    def stop(self):
+        self.is_running = False
+
+    def run(self):
+        while self.is_running:
+            c = self.arena_win.getch()
+            if c == ord('`'):
+                self.stop()
+
+            self.next_layer_step(c)
+            curses.flushinp()

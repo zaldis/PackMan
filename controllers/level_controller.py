@@ -1,16 +1,9 @@
-import curses
 import os
-import threading
 import time
 from logic.arena import Arena
 from presentation.console_presentation import ConsolePresentation
-
-
-ARENA_WIN_H = 15
-ARENA_WIN_W = 30
-
-STATISTIC_WIN_H = 10
-STATISTIC_WIN_W = 30
+from presentation.console_presentation import ARENA_WIN_H
+from presentation.console_presentation import ARENA_WIN_W
 
 
 class LevelController:
@@ -19,32 +12,16 @@ class LevelController:
     def __init__(self):
         self.level_number = 1
         self.arena = Arena()
-        self.screen = curses.initscr()
-        self.arena_win = curses.newwin(ARENA_WIN_H, ARENA_WIN_W, 0, 0)
-        self.statistic_win = curses.newwin(STATISTIC_WIN_H, STATISTIC_WIN_W, 0, 35)
+        self.shower = ConsolePresentation
         self.boundary = None
         self.key_controller = None
-        self.base_load()
-
-    def base_load(self):
-        curses.noecho()
-        curses.cbreak()
-        self.screen.keypad(True)
-
-    def random_level(self):
-        self.arena = Arena()
-        ConsolePresentation.show_arena(self.screen, self.arena.arena)
-        ConsolePresentation.show_status(self.statistic_win,
-                                        self.arena.spaces,
-                                        self.arena.count_dots,
-                                        self.arena.player_lives)
-        self.key_controller.start()
+        ConsolePresentation.load()
 
     def run_game(self):
         level_path = os.path.join(LevelController.LEVEL_PATH, f'{self.level_number}.lvl')
         level_files = [x for x in filter(lambda x: x[-4:] == '.lvl', os.listdir(LevelController.LEVEL_PATH))]
         self.find_boundary()
-        self.key_controller = KeyController(self.screen, self.arena_win, self.statistic_win, self.arena)
+        self.key_controller = self.shower.create_key_controller(self.next_player_step)
         self.key_controller.start()
 
         while self.level_number <= len(level_files) and self.arena.player_lives > 0 and self.key_controller.is_alive():
@@ -54,7 +31,7 @@ class LevelController:
                     self.arena.running_game:
                 self.show_arena()
                 self.print_status()
-                time.sleep(0.01)
+                time.sleep(0.1)
 
             self.print_status()
             self.arena.stop()
@@ -63,6 +40,24 @@ class LevelController:
 
         self.arena.stop()
         self.key_controller.stop()
+        self.shower.close()
+
+    def next_player_step(self, button):
+        if button == ord('a'):
+            self.arena.move_player("LEFT")
+
+        if button == ord('d'):
+            self.arena.move_player("RIGHT")
+
+        if button == ord('w'):
+            self.arena.move_player("UP")
+
+        if button == ord('s'):
+            self.arena.move_player("DOWN")
+
+        if button == ord('`'):
+            self.arena.stop()
+        time.sleep(self.arena.player_pause)
 
     def find_boundary(self):
         width = self.arena._width
@@ -93,7 +88,6 @@ class LevelController:
     def show_arena(self):
         self.find_boundary()
         ConsolePresentation.show_arena(
-            self.arena_win,
             [line[self.boundary[0]:self.boundary[1]]
              for line in self.arena.arena][self.boundary[2]:self.boundary[3]]
         )
@@ -106,45 +100,4 @@ class LevelController:
             'lives': self.arena.player_lives,
             'bonuses': [repr(x) for x in self.arena.bonuses]
         }
-        ConsolePresentation.show_status(self.statistic_win, status)
-
-    def close(self):
-        curses.nocbreak()
-        self.screen.keypad(False)
-        curses.echo()
-
-
-class KeyController(threading.Thread):
-    def __init__(self, screen, arena_win, statistic_win, arena):
-        super().__init__()
-        self.screen = screen
-        self.arena_win = arena_win
-        self.statistic_win = statistic_win
-        self.arena = arena
-        self.is_running = True
-
-    def stop(self):
-        self.is_running = False
-
-    def run(self):
-        while self.is_running:
-            c = self.arena_win.getch()
-            if c == ord('a'):
-                self.arena.move_player("LEFT")
-
-            if c == ord('d'):
-                self.arena.move_player("RIGHT")
-
-            if c == ord('w'):
-                self.arena.move_player("UP")
-
-            if c == ord('s'):
-                self.arena.move_player("DOWN")
-
-            if c == ord('`'):
-                self.stop()
-                self.arena.stop()
-
-            time.sleep(self.arena.player_pause)
-            curses.flushinp()
-
+        ConsolePresentation.show_status(status)
