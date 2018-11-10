@@ -13,6 +13,7 @@ from .unit import Door
 from .unit import Bonus
 from .unit import SpeedBonus
 from .unit import HungryBonus
+from .unit import LifeBonus
 from .unit import DIRECTIONS
 
 
@@ -87,7 +88,7 @@ class Arena:
         self._bonus_generator.start()
 
     def reset(self):
-        self._all_bonuses = [HungryBonus, SpeedBonus]
+        self._all_bonuses = [HungryBonus, LifeBonus]
         self._dots.clear()
         self._spaces.clear()
         self._ghosts.clear()

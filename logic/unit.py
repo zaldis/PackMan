@@ -160,6 +160,18 @@ class HungryBonus(Bonus):
         return f"hungry bonus"
 
 
+class LifeBonus(Bonus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def apply(self):
+        with threading.Lock():
+            self.packman.lives += 1
+
+    def destroy(self):
+        pass
+
+
 class Dot(GameObject):
     score = 1
 
