@@ -20,12 +20,12 @@ STATISTIC_WIN_W = 30
 
 
 class ConsolePresentation:
-    screen = curses.initscr()
-    arena_win = curses.newwin(ARENA_WIN_H + 1, ARENA_WIN_W + 1, 0, 0)
-    statistic_win = curses.newwin(STATISTIC_WIN_H, STATISTIC_WIN_W, 0, 35)
-
     @classmethod
     def load(cls):
+        cls.screen = curses.initscr()
+        cls.arena_win = curses.newwin(ARENA_WIN_H + 1, ARENA_WIN_W + 1, 0, 0)
+        cls.statistic_win = curses.newwin(STATISTIC_WIN_H, STATISTIC_WIN_W, 0, 35)
+
         curses.noecho()
         curses.cbreak()
         cls.screen.keypad(True)
@@ -35,6 +35,7 @@ class ConsolePresentation:
         curses.nocbreak()
         cls.screen.keypad(False)
         curses.echo()
+        curses.endwin()
 
     @classmethod
     def show_arena(cls, arena):

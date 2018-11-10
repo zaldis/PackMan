@@ -41,6 +41,7 @@ class LevelController:
         self.arena.stop()
         self.key_controller.stop()
         self.shower.close()
+        return self.arena.player.score
 
     def next_player_step(self, button):
         if button == ord('a'):
@@ -57,6 +58,8 @@ class LevelController:
 
         if button == ord('`'):
             self.arena.stop()
+            self.shower.close()
+            self.key_controller.stop()
         time.sleep(self.arena.player_pause)
 
     def find_boundary(self):

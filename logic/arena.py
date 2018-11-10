@@ -215,6 +215,8 @@ class Arena:
             if isinstance(unit, (Ghost, )) or issubclass(type(unit), Bonus):
                 if self._objects_map[unit.position.y][unit.position.x] == Ghost or \
                         self._objects_map[unit.position.y][unit.position.x] == Dot or \
+                        self._objects_map[unit.position.y][unit.position.x] == Door or \
+                        self._objects_map[unit.position.y][unit.position.x] == PackMan or \
                         issubclass(self._objects_map[unit.position.y][unit.position.x], Bonus):
                     unit.position = start_position
                     return False
@@ -294,7 +296,6 @@ class BonusGenerator(threading.Thread):
 
     def run(self):
         while self._is_running:
-            pass
             self.sleeper.wait(timeout=40)
 
             space_position = self.arena.space_position
