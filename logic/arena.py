@@ -13,6 +13,7 @@ from .unit import Door
 from .unit import Bonus
 from .unit import SpeedBonus
 from .unit import HungryBonus
+from .unit import EnergizerBonus
 from .unit import LifeBonus
 from .unit import DIRECTIONS
 
@@ -88,7 +89,7 @@ class Arena:
         self._bonus_generator.start()
 
     def reset(self):
-        self._all_bonuses = [HungryBonus, LifeBonus, SpeedBonus]
+        self._all_bonuses = [HungryBonus, LifeBonus, SpeedBonus, EnergizerBonus]
         self._dots.clear()
         self._spaces.clear()
         self._ghosts.clear()
@@ -180,7 +181,21 @@ class Arena:
 
     def move_ghost(self, ghost_code):
         with threading.Lock():
-            direction = random.choice(DIRECTIONS)
+            directions = []
+            if self._player.have_bonus(EnergizerBonus):
+                if self._player.position.x > self._ghosts[ghost_code].position.x:
+                    directions.append('LEFT')
+                else:
+                    directions.append('RIGHT')
+
+                if self._player.position.y > self._ghosts[ghost_code].position.y:
+                    directions.append('UP')
+                else:
+                    directions.append('DOWN')
+            else:
+                directions = DIRECTIONS
+
+            direction = random.choice(directions)
             return self.move_unit(self._ghosts[ghost_code], direction)
 
     def move_bonus(self, bonus):

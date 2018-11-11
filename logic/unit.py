@@ -88,11 +88,6 @@ class _HungryPackManState:
         self.eat = [Dot, Bonus, Ghost]
         self.danger = []
 
-
-class _EnergizerState:
-    pass
-
-
 class Ghost(_Unit):
     score = 5
 
@@ -171,11 +166,9 @@ class EnergizerBonus(Bonus):
     def apply(self):
         with threading.Lock():
             self.packman.add_bonus(self)
-            self.packman.state = _EnergizerState()
 
     def destroy(self):
         with threading.Lock():
-            self.packman.state = _NormalPackManState()
             self.packman.delete_bonus(type(self))
 
 
