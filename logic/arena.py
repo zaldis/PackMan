@@ -90,7 +90,7 @@ class Arena:
         self._bonus_generator.start()
 
     def reset(self):
-        self._all_bonuses = [SmartOpponentBonus] # [HungryBonus, LifeBonus, SpeedBonus, EnergizerBonus]
+        self._all_bonuses = [SmartOpponentBonus, HungryBonus, LifeBonus, SpeedBonus, EnergizerBonus]
         self._dots.clear()
         self._spaces.clear()
         self._ghosts.clear()
@@ -414,7 +414,7 @@ class BonusGenerator(threading.Thread):
 
     def run(self):
         while self._is_running:
-            self.sleeper.wait(timeout=40)
+            self.sleeper.wait(timeout=20)
 
             space_position = self.arena.space_position
             if space_position:

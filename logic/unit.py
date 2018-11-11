@@ -49,7 +49,6 @@ class PackMan(_Unit):
         self.pause = 0.1
         self.score = 0
         self.bonuses = set()
-        self.bonuses.add(SmartOpponentBonus(self, _Point(5, 7)))
         self.state = _NormalPackManState()
 
     def have_bonus(self, bonus_type):
@@ -197,6 +196,9 @@ class SmartOpponentBonus(Bonus):
     def destroy(self):
         with threading.Lock():
             self.packman.delete_bonus(type(self))
+
+    def __repr__(self):
+        return f"smart opponent bonus"
 
 
 class Dot(GameObject):
