@@ -49,6 +49,7 @@ class PackMan(_Unit):
         self.pause = 0.1
         self.score = 0
         self.bonuses = set()
+        self.bonuses.add(SmartOpponentBonus(self, _Point(5, 7)))
         self.state = _NormalPackManState()
 
     def have_bonus(self, bonus_type):
@@ -87,6 +88,7 @@ class _HungryPackManState:
     def __init__(self):
         self.eat = [Dot, Bonus, Ghost]
         self.danger = []
+
 
 class Ghost(_Unit):
     score = 5
@@ -182,6 +184,19 @@ class LifeBonus(Bonus):
 
     def destroy(self):
         pass
+
+
+class SmartOpponentBonus(Bonus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def apply(self):
+        with threading.Lock():
+            self.packman.add_bonus(self)
+
+    def destroy(self):
+        with threading.Lock():
+            self.packman.delete_bonus(type(self))
 
 
 class Dot(GameObject):

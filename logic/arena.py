@@ -14,6 +14,7 @@ from .unit import Bonus
 from .unit import SpeedBonus
 from .unit import HungryBonus
 from .unit import EnergizerBonus
+from .unit import SmartOpponentBonus
 from .unit import LifeBonus
 from .unit import DIRECTIONS
 
@@ -89,7 +90,7 @@ class Arena:
         self._bonus_generator.start()
 
     def reset(self):
-        self._all_bonuses = [HungryBonus, LifeBonus, SpeedBonus, EnergizerBonus]
+        self._all_bonuses = [SmartOpponentBonus] # [HungryBonus, LifeBonus, SpeedBonus, EnergizerBonus]
         self._dots.clear()
         self._spaces.clear()
         self._ghosts.clear()
@@ -192,11 +193,112 @@ class Arena:
                     directions.append('UP')
                 else:
                     directions.append('DOWN')
+            elif self._player.have_bonus(SmartOpponentBonus):
+                directions = self.closest_directions_to_player(self._ghosts[ghost_code])
             else:
                 directions = DIRECTIONS
 
             direction = random.choice(directions)
             return self.move_unit(self._ghosts[ghost_code], direction)
+
+    def closest_directions_to_player(self, unit):
+        with threading.Lock():
+            start = unit.position
+            end = self._player.position
+            path_map = [[-1] * self._width for _ in range(self._height)]
+            path_map[start.y][start.x] = 0
+            next_steps = [start]
+            step_number = 0
+
+            while len(next_steps) > 0:
+                curr_pos = next_steps.pop(0)
+                step_number += 1
+                if curr_pos.x == end.x and curr_pos.y == end.y:
+                    break
+
+                left, right, up, down = self._next_step_to_neighbor(curr_pos)
+
+                if self.free_position_to_ghost(left) and path_map[left.y][left.x] == -1:
+                    next_steps.append(left)
+                    path_map[left.y][left.x] = path_map[curr_pos.y][curr_pos.x] + 1
+                if self.free_position_to_ghost(right) and path_map[right.y][right.x] == -1:
+                    next_steps.append(right)
+                    path_map[right.y][right.x] = path_map[curr_pos.y][curr_pos.x] + 1
+                if self.free_position_to_ghost(up) and path_map[up.y][up.x] == -1:
+                    next_steps.append(up)
+                    path_map[up.y][up.x] = path_map[curr_pos.y][curr_pos.x] + 1
+                if self.free_position_to_ghost(down) and path_map[down.y][down.x] == -1:
+                    next_steps.append(down)
+                    path_map[down.y][down.x] = path_map[curr_pos.y][curr_pos.x] + 1
+
+            if curr_pos.x != end.x or curr_pos.y != end.y:
+                return [random.choice(DIRECTIONS)]
+
+            step_number -= 2
+            if path_map[curr_pos.y][curr_pos.x] < 1:
+                found_position = end
+            else:
+                while path_map[curr_pos.y][curr_pos.x] != 1:
+                    left, right, up, down = self._next_step_to_neighbor(curr_pos)
+                    if path_map[left.y][left.x] == path_map[curr_pos.y][curr_pos.x] - 1:
+                        curr_pos = left
+                    elif path_map[right.y][right.x] == path_map[curr_pos.y][curr_pos.x] - 1:
+                        curr_pos = right
+                    elif path_map[down.y][down.x] == path_map[curr_pos.y][curr_pos.x] - 1:
+                        curr_pos = down
+                    elif path_map[up.y][up.x] == path_map[curr_pos.y][curr_pos.x] - 1:
+                        curr_pos = up
+                found_position = curr_pos
+
+            if start.x + 1 == found_position.x:
+                directions = ['RIGHT']
+            elif start.x != found_position.x:
+                directions = ['LEFT']
+
+            elif start.y + 1 == found_position.y:
+                directions = ['DOWN']
+            elif start.y != found_position.y:
+                directions = ['UP']
+
+            else:
+                directions = DIRECTIONS
+
+            return directions
+
+    def _next_step_to_neighbor(self, position):
+        if position.x - 1 >= 0:
+            left = _Point(position.x - 1, position.y)
+        else:
+            left = _Point(self._width - 1, position.y)
+
+        if position.x + 1 < self._width:
+            right = _Point(position.x + 1, position.y)
+        else:
+            right = _Point(0, position.y)
+
+        if position.y - 1 >= 0:
+            up = _Point(position.x, position.y - 1)
+        else:
+            up = _Point(position.x, self._height - 1)
+
+        if position.y + 1 < self._height:
+            down = _Point(position.x, position.y + 1)
+        else:
+            down = _Point(position.x, 0)
+
+        return left, right, up, down
+
+    def free_position_to_ghost(self, position):
+        if self._back_arena[position.y][position.x] == Dot or \
+            self._objects_map[position.y][position.x] == Dot or \
+            self._back_arena[position.y][position.x] == Ghost or \
+            self._objects_map[position.y][position.x] == Ghost or \
+            issubclass(self._back_arena[position.y][position.x], Bonus) or \
+            issubclass(self._objects_map[position.y][position.x], Bonus):
+                return False
+
+        return True
+
 
     def move_bonus(self, bonus):
         with threading.Lock():
