@@ -71,7 +71,6 @@ class Runner(object):
         for ind in range(min(10, len(self.players))):
             print(f"{ind + 1:>3}) {self.players[ind].name:<20} {self.players[ind].score:<5}")
 
-
     def _run_game(self):
         level_controller = LevelController()
         self.score = level_controller.run_game()

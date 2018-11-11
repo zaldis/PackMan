@@ -88,7 +88,7 @@ class Arena:
         self._bonus_generator.start()
 
     def reset(self):
-        self._all_bonuses = [HungryBonus, LifeBonus]
+        self._all_bonuses = [HungryBonus, LifeBonus, SpeedBonus]
         self._dots.clear()
         self._spaces.clear()
         self._ghosts.clear()
