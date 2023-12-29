@@ -1,4 +1,4 @@
-from controllers.level_controller import LevelController
+from src.controllers.level_controller import LevelController
 
 
 PATH_STAT = 'stat.txt'
@@ -11,12 +11,15 @@ class Player(object):
 
 
 def read_players():
-    players = []
-    with open(PATH_STAT, 'r', encoding='utf-8') as file:
-        for line in file:
-            if line:
-                name, score = line.split(',')
-                players.append(Player(name=name, score=int(score)))
+    try:
+        with open(PATH_STAT, 'r', encoding='utf-8') as file:
+            players = []
+            for line in file:
+                if line:
+                    name, score = line.split(',')
+                    players.append(Player(name=name, score=int(score)))
+    except FileNotFoundError:
+        players = []
 
     return players
 

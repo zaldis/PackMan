@@ -1,13 +1,14 @@
 import os
 import time
-from logic.arena import Arena
-from presentation.console_presentation import ConsolePresentation
-from presentation.console_presentation import ARENA_WIN_H
-from presentation.console_presentation import ARENA_WIN_W
+
+from src.logic.arena import Arena
+from src.presentation.console_presentation import ConsolePresentation
+from src.presentation.console_presentation import ARENA_WIN_H
+from src.presentation.console_presentation import ARENA_WIN_W
 
 
 class LevelController:
-    LEVEL_PATH = os.path.join('.', 'levels')
+    LEVEL_PATH = os.path.join('.', 'src', 'levels')
 
     def __init__(self):
         self.level_number = 1

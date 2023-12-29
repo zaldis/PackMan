@@ -18,6 +18,10 @@ Improvements:
     </li>
 </ul>
 
+Requirements:
+-
+Python >=3.8 & <3.12 
+
 Starting:
 -
 <ol>
