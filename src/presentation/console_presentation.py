@@ -3,13 +3,13 @@ import curses
 
 
 GAME_OBJECTS_PRESENTATION = {
-    ' ': '·',
-    '.': '*',
-    'P': '@',
-    'G': 'G',
-    'W': '#',
-    'B': '?',
-    'D': 'x'
+    ' ': '🔳',
+    '.': '☕',
+    'P': '🐱',
+    'G': '👻',
+    'W': '🛑',
+    'B': '💎',
+    'D': '🚪'
 }
 
 ARENA_WIN_H = 15
@@ -24,7 +24,7 @@ class ConsolePresentation:
     def load(cls):
         cls.screen = curses.initscr()
         cls.arena_win = curses.newwin(ARENA_WIN_H + 1, ARENA_WIN_W + 1, 0, 0)
-        cls.statistic_win = curses.newwin(STATISTIC_WIN_H, STATISTIC_WIN_W, 0, 35)
+        cls.statistic_win = curses.newwin(STATISTIC_WIN_H, STATISTIC_WIN_W, 0, 70)
 
         curses.noecho()
         curses.cbreak()
