@@ -12,8 +12,8 @@ GAME_OBJECTS_PRESENTATION = {
     'D': '🚪'
 }
 
-ARENA_WIN_H = 15
-ARENA_WIN_W = 30
+ARENA_WIN_H = 30
+ARENA_WIN_W = 50
 
 STATISTIC_WIN_H = 15
 STATISTIC_WIN_W = 30
@@ -23,11 +23,13 @@ class ConsolePresentation:
     @classmethod
     def load(cls):
         cls.screen = curses.initscr()
-        cls.arena_win = curses.newwin(ARENA_WIN_H + 1, ARENA_WIN_W + 1, 0, 0)
-        cls.statistic_win = curses.newwin(STATISTIC_WIN_H, STATISTIC_WIN_W, 0, 70)
+        arena_start_x = curses.COLS // 2 - ARENA_WIN_W
+        cls.arena_win = curses.newwin(ARENA_WIN_H + 1, ARENA_WIN_W + 1, 0, arena_start_x)
+        cls.statistic_win = curses.newwin(STATISTIC_WIN_H, STATISTIC_WIN_W, 0, arena_start_x + ARENA_WIN_W + 40)
 
         curses.noecho()
         curses.cbreak()
+        curses.curs_set(0)
         cls.screen.keypad(True)
 
     @classmethod
@@ -36,6 +38,7 @@ class ConsolePresentation:
         cls.screen.keypad(False)
         curses.echo()
         curses.endwin()
+        curses.curs_set(1)
 
     @classmethod
     def show_arena(cls, arena):
@@ -59,7 +62,7 @@ class ConsolePresentation:
         score = status['score']
         cls.statistic_win.addstr(3, 0, f"Score: {score}")
         lives = status['lives']
-        cls.statistic_win.addstr(4, 0, f"Lives: {'@' * lives}")
+        cls.statistic_win.addstr(4, 0, f"Lives: {'♥ ' * lives}")
 
         cls.statistic_win.addstr(6, 0, "Bonuses:")
         bonuses = status['bonuses']
