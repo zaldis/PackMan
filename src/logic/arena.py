@@ -45,8 +45,8 @@ class Arena:
         self._height = height
         self.running_game = True
         self.opened_door = False
-        self._objects_map = [[None] * width for h in range(height)]
-        self._back_arena = [[Dot] * width for h in range(height)]
+        self._objects_map = [[None] * width for _ in range(height)]
+        self._back_arena = [[Dot] * width for _ in range(height)]
         self._player.position.x = 0
         self._player.position.y = 0
         self._objects_map[0][0] = PackMan
@@ -62,8 +62,8 @@ class Arena:
             width, height = map(int, fhandle.readline().split())
             self._width = width
             self._height = height
-            self._objects_map = [[Space] * width for h in range(height)]
-            self._back_arena = [[Space] * width for h in range(height)]
+            self._objects_map = [[Space] * width for _ in range(height)]
+            self._back_arena = [[Space] * width for _ in range(height)]
 
             for y, line in enumerate(fhandle):
                 for x, ch in enumerate(line.strip()):

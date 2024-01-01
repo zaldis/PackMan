@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from src.controllers.level_controller import LevelController
 from src.ui.utils import console as console_utils
 from src.models import Player
-from src.repos.statistic import StatisticRepo, FileBasedStatisticRepo
+from src.repos.leaderboard import Repo, FileBasedLeaderboardRepo
 from src.ui.widgets import Widget, REPLWidget, REPLCommand
 
 
@@ -14,11 +14,11 @@ class BasePackManRunner(ABC):
     def __init__(
         self,
         format_statistic: Callable[[list[Player], int], str],
-        statistic_repo: StatisticRepo,
+        leaderboard_repo: Repo,
     ) -> None:
         self.name = 'anonym'
         self._format_statistic = format_statistic
-        self._statistic_repo = statistic_repo
+        self._statistic_repo = leaderboard_repo
 
         self.setup_root_widget()
 
@@ -93,6 +93,6 @@ class ConsolePackManRunner(BasePackManRunner):
 
 runner = ConsolePackManRunner(
     format_statistic=console_utils.get_statistic_in_ascii,
-    statistic_repo=FileBasedStatisticRepo()
+    leaderboard_repo=FileBasedLeaderboardRepo()
 )
 runner.run()

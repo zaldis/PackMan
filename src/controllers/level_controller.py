@@ -90,10 +90,12 @@ class LevelController:
         return left, right, up, down
 
     def show_arena(self):
-        self.find_boundary()
+        from_x, to_x, from_y, to_y = self.find_boundary()
         ConsolePresentation.show_arena(
-            [line[self.boundary[0]:self.boundary[1]]
-             for line in self.arena.arena][self.boundary[2]:self.boundary[3]]
+            [
+                line[from_x:to_x]
+                for line in self.arena.arena[from_y:to_y]
+            ]
         )
 
     def print_status(self):

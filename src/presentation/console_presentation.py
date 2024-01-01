@@ -57,7 +57,7 @@ class ConsolePresentation:
         level_number = status['level_number']
         cls.statistic_win.addstr(0, 0, f"Level: {level_number}")
         remain_dots = status['remain_dots']
-        cls.statistic_win.addstr(1, 0, f"Remain dots: {remain_dots}")
+        cls.statistic_win.addstr(1, 0, f"Remain coffee cups: {remain_dots}")
 
         score = status['score']
         cls.statistic_win.addstr(3, 0, f"Score: {score}")

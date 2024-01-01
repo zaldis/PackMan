@@ -1,17 +1,9 @@
-from typing import Protocol
-
 from src.models import Player
+from .base import Repo
 
 
-class StatisticRepo(Protocol):
-    def get_records(self) -> list[Player]:
-        ...
-
-    def add_record(self, new_player: Player) -> None:
-        ...
-
-class FileBasedStatisticRepo:
-    def __init__(self, path: str = 'stat.txt') -> None:
+class FileBasedLeaderboardRepo(Repo[Player]):
+    def __init__(self, path: str = 'leaderboard.txt') -> None:
         self._path = path
 
     def get_records(self) -> list[Player]:
@@ -26,9 +18,9 @@ class FileBasedStatisticRepo:
             pass
         return players
 
-    def add_record(self, new_player: Player) -> None:
+    def add_record(self, new_record: Player) -> None:
         old_players = self.get_records()
-        new_statistic = sorted([*old_players, new_player], key=lambda x: x.score, reverse=True)
+        new_leaderboard = sorted([*old_players, new_record], key=lambda x: x.score, reverse=True)
         with open(self._path, 'w', encoding='utf-8') as file:
-            for player in new_statistic:
+            for player in new_leaderboard:
                 file.write(f"{player.name},{player.score}\n")
